@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mastering CSS Flexbox</title>
+    <style>
+        /* === ESTILOS GLOBALES (DARK MODE POR DEFECTO) === */
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .slideshow-container { position: relative; width: 90%; max-width: 1000px; }
+        
+        .slide {
+            display: none;
+            background-color: #1e1e1e;
+            border: 1px solid #333;
+            height: 640px; /* Más alto para explicar conceptos complejos */
+            padding: 40px 60px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            flex-direction: column; justify-content: center; position: relative;
+            box-sizing: border-box;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        .fade { animation-name: fade; animation-duration: 0.5s; }
+        @keyframes fade { from {opacity: .4} to {opacity: 1} }
+
+        .prev, .next {
+            cursor: pointer; position: absolute; top: 50%; transform: translateY(-50%);
+            width: 50px; height: 50px; background-color: #333; color: #f1f1f1;
+            border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            display: flex; justify-content: center; align-items: center;
+            font-weight: bold; font-size: 24px; transition: all 0.3s ease;
+            user-select: none; z-index: 10;
+        }
+        .prev:hover, .next:hover { background-color: #555; }
+        .prev { left: -70px; }
+        .next { right: -70px; }
+
+        /* === COLOR DE ACENTO: AZUL CLARO (#4fc3f7) === */
+        .slide h1 { 
+            font-size: 3.5em; 
+            text-align: center; 
+            border-bottom: 4px solid #4fc3f7; 
+            padding-bottom: 20px; 
+            color: #4fc3f7; 
+        }
+        .slide h2 { 
+            font-size: 2.6em; 
+            margin: 0 0 30px; 
+            text-align: center; 
+            color: #4fc3f7; 
+        }
+        
+        .single-content p { font-size: 1.3em; color: #cccccc; text-align: center; margin-bottom: 20px; line-height: 1.5; }
+        
+        /* Sintaxis de Código */
+        pre { width: 95%; max-width: 850px; margin: 0 auto; background-color: #263238; color: #eceff1; padding: 20px; border-radius: 8px; font-size: 1.05em; white-space: pre-wrap; border: 1px solid #37474f; text-align: left; box-shadow: inset 0 2px 5px rgba(0,0,0,0.3); overflow-x: auto; }
+        
+        code { font-family: 'Consolas', 'Monaco', monospace; color: #80cbc4; }
+        .comment { color: #78909c; font-style: italic; }
+        .prop { color: #c792ea; } /* Lila */
+        .val { color: #c3e88d; }  /* Verde claro */
+        .sel { color: #ffcb6b; }  /* Amarillo */
+        .important { color: #ff5370; font-weight: bold; } /* Rojo suave para énfasis */
+
+        .footer { position: absolute; bottom: 20px; right: 40px; font-size: 1em; color: #888; }
+        .subtitle { color: #b0bec5; font-size: 1.8em; font-weight: 300; margin: 0 0 30px; text-align: center; letter-spacing: 1px; }
+        
+        /* === SWITCH TEMA === */
+        .theme-switch-wrapper { position: fixed; top: 15px; right: 15px; z-index: 100; }
+        #theme-switch {
+            cursor: pointer; padding: 8px 12px; border-radius: 20px;
+            border: 1px solid #555; background-color: #333; color: #f1f1f1;
+            font-size: 0.9em; transition: all 0.3s ease;
+        }
+        #theme-switch:hover { background-color: #555; }
+
+        /* === LIGHT MODE === */
+        body.light-mode { background-color: #f5f7fa; color: #333; }
+        body.light-mode .slide { background-color: #fff; border-color: #d1d9e6; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        
+        /* Azul vibrante para modo claro (#0288d1) */
+        body.light-mode .slide h1 { color: #0288d1; border-color: #0288d1; }
+        body.light-mode .slide h2 { color: #0288d1; }
+        
+        body.light-mode .subtitle { color: #546e7a; }
+        body.light-mode .single-content p { color: #455a64; }
+        body.light-mode pre { background-color: #eceff1; border-color: #cfd8dc; color: #263238; }
+        body.light-mode code { color: #00695c; }
+        body.light-mode .comment { color: #90a4ae; }
+        body.light-mode .prop { color: #7b1fa2; }
+        body.light-mode .val { color: #2e7d32; }
+        body.light-mode .sel { color: #d84315; } 
+        body.light-mode .important { color: #d32f2f; }
+
+        body.light-mode .prev, body.light-mode .next { background-color: #e0e0e0; color: #333; }
+        body.light-mode .prev:hover, body.light-mode .next:hover { background-color: #bdbdbd; }
+        body.light-mode #theme-switch { background-color: #fff; color: #333; border-color: #ccc; }
+        body.light-mode #theme-switch:hover { background-color: #eee; }
+
+        @media screen and (max-width: 768px) {
+            body { padding: 15px; }
+            .slideshow-container { width: 100%; padding-bottom: 75px; }
+            .slide { height: auto; min-height: 75vh; padding: 20px 25px; }
+            .prev, .next { top: auto; bottom: 15px; width: 45px; height: 45px; }
+            .prev { left: 50%; transform: translateX(-110%); }
+            .next { left: 50%; transform: translateX(10%); right: auto; }
+            .slide h1 { font-size: 2.2em; }
+            .slide h2 { font-size: 1.8em; }
+            .single-content p { font-size: 1.1em; }
+            pre { font-size: 0.9em; }
+            .footer { font-size: 0.8em; right: 25px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="theme-switch-wrapper">
+        <button id="theme-switch">Light Mode</button>
+    </div>
+
+    <div class="slideshow-container">
+        
+        <!-- =============================================================== -->
+        <!-- INICIO DE DIAPOSITIVAS -->
+        <!-- =============================================================== -->
+
+        <div class="slide fade">
+            <h1>Cheat Sheet de CSS</h1>
+            <div class="subtitle">Flexbox</div>
+            <div class="footer">1 / 22</div>
+        </div>
+
+        <div class="slide fade">
+            <h2>Concepto Clave: Los dos ejes</h2>
+            <div class="single-content">
+                <p>Para entender Flexbox, debes entender que existen dos ejes invisibles.</p>
+                <pre><code><span class="comment">/* --------------------------------------
+   EJE PRINCIPAL (Main Axis) ->
+   Es la dirección en la que fluyen los ítems.
+   (Por defecto: izquierda a derecha)
+   -------------------------------------- */</span>
+
+<span class="comment">/* |
+   |  EJE CRUZADO (Cross Axis)
+   |  Es perpendicular al eje principal.
+   |  (Por defecto: arriba a abajo)
+   v
+*/</span></code></pre>
+            </div>
+            <div class="footer">2 / 22</div>
+        </div>
+
+        <div class="slide fade">
+            <h2>El Contenedor (Padre)</h2>
+            <div class="single-content">
+                <p>Todo empieza aplicando <code>display: flex</code> al elemento padre. Esto convierte a sus hijos directos en "flex items".</p>
+                <pre><code><span class="sel">.contenedor</span> {
+  <span class="prop">display</span>: <span class="val">flex</span>;
+  
+  <span class="comment">/* Opcional: display: inline-flex;
+     (El contenedor se comporta como inline,
+      pero los hijos siguen siendo flex) */</span>
+}</code></pre>
+            </div>
+            <div class="footer">3 / 22</div>
+        </div>
+        
+        <div class="slide fade">
+            <h2>1. Flex Direction (Padre)</h2>
+            <div class="single-content">
+                <p>Define cuál es el Eje Principal. ¡Esto cambia todo!</p>
+                <pre><code><span class="sel">.contenedor</span> {
+  <span class="comment">/* Horizontal (defecto) -> Eje Principal es X */</span>
+  <span class="prop">flex-direction</span>: <span class="val">row</span>; 
+
+  <span class="comment">/* Vertical -> Eje Principal es Y */</span>
+  <span class="prop">flex-direction</span>: <span class="val">column</span>;
+
+  <span class="comment">/* Inversos */</span>
+  <span class="prop">flex-direction</span>: <span class="val">row-reverse</span>;
+  <span class="prop">flex-direction</span>: <span class="val">column-reverse</span>;
+}</code></pre>
+            </div>
+            <div class="footer">4 / 22</div>
+        </div>
+
+        <div class="slide fade">
+            <h2>2. Flex Wrap (Padre)</h2>
+            <div class="single-content">
+                <p>Por defecto, Flexbox intenta meter todo en una sola línea (aplastando los ítems). Esto controla el salto de línea.</p>
+                <pre><code><span class="sel">.contenedor</span> {
+  <span class="comment">/* No saltar (defecto, puede causar scroll horizontal) */</span>
+  <span class="prop">flex-wrap</span>: <span class="val">nowrap</span>;
+
+  <span class="comment">/* Si no cabe, baja a la siguiente línea */</span>
+  <span class="prop">flex-wrap</span>: <span class="val">wrap</span>;
+
+  <span class="comment">/* Salta hacia arriba */</span>
+  <span class="prop">flex-wrap</span>: <span class="val">wrap-reverse</span>;
+}</code></pre>
+            </div>
+            <div class="footer">5 / 22</div>
+        </div>
+
+        <div class="slide fade">
+            <h2>3. Justify Content (Padre)</h2>
+            <div class="single-content">
+                <p>Alinea los ítems a lo largo del <strong>EJE PRINCIPAL</strong> (Main Axis). Controla la distribución horizontal (si es row).</p>
+                <pre><code><span class="sel">.contenedor</span> {
+  <span class="prop">justify-content</span>: <span class="val">flex-start</span>;    <span class="comment">/* Inicio (izq) */</span>
+  <span class="prop">justify-content</span>: <span class="val">flex-end</span>;      <span class="comment">/* Final (der) */</span>
+  <span class="prop">justify-content</span>: <span class="val">center</span>;        <span class="comment">/* Centro */</span>
+  
+  <span class="prop">justify-content</span>: <span class="val">space-between</span>; <span class="comment">/* Extremos pegados */</span>
+  <span class="prop">justify-content</span>: <span class="val">space-around</span>;  <span class="comment">/* Espacio alrededor */</span>
+  <span class="prop">justify-content</span>: <span class="val">space-evenly</span>;  <span class="comment">/* Espacio igual */</span>
+}</code></pre>
+            </div>
+            <div class="footer">6 / 22</div>
+        </div>
+
+        <div class="slide fade">
+            <h2>4. Align Items (Padre)</h2>
+            <div class="single-content">
+                <p>Alinea los ítems a lo largo del <strong>EJE CRUZADO</strong> (Cross Axis). Controla la alineación vertical (si es row).</p>
+                <pre><code><span class="sel">.contenedor</span> {
+  <span class="prop">align-items</span>: <span class="val">stretch</span>;     <span class="comment">/* Estirar (defecto) */</span>
+  <span class="prop">align-items</span>: <span class="val">flex-start</span>;  <span class="comment">/* Arriba */</span>
+  <span class="prop">align-items</span>: <span class="val">flex-end</span>;    <span class="comment">/* Abajo */</span>
+  <span class="prop">align-items</span>: <span class="val">center</span>;      <span class="comment">/* Centro vertical */</span>
+  <span class="prop">align-items</span>: <span class="val">baseline</span>;    <span class="comment">/* Línea base del texto */</span>
+}
+<span class="comment">/* Nota: Si cambias a flex-direction: column,
+   align-items controla la HORIZONTAL. */</span></code></pre>
+            </div>
+            <div class="footer">7 / 22</div>
+        </div>
+
+        <div class="slide fade">
+            <h2>5. Align Content (Padre)</h2>
+            <div class="single-content">
+                <p>Solo funciona si tienes <code>flex-wrap: wrap</code> y múltiples líneas. Controla el espacio entre las líneas enteras.</p>
+                <pre><code><span class="sel">.contenedor</span> {
+  <span class="prop">flex-wrap</span>: <span class="val">wrap</span>;
+  <span class="prop">height</span>: <span class="val">600px</span>;
+  
+  <span class="comment">/* Las líneas se agrupan al centro */</span>
+  <span class="prop">align-content</span>: <span class="val">center</span>; 
+  
+  <span class="comment">/* Las líneas se separan al máximo */</span>
+  <span class="prop">align-content</span>: <span class="val">space-between</span>;
+}</code></pre>
+            </div>
+            <div class="footer">8 / 22</div>
+        </div>
+
+        <div class="slide fade">
+            <h2>6. Gap (Padre)</h2>
+            <div class="single-content">
+                <p>La propiedad más amada. Crea espacio entre filas y columnas sin usar márgenes.</p>
+                <pre><code><span class="sel">.contenedor</span> {
+  <span class="prop">display</span>: <span class="val">flex</span>;
+  
+  <span class="comment">/* Espacio en ambos ejes */</span>
+  <span class="prop">gap</span>: <span class="val">20px</span>;
+
+  <span class="comment">/* gap: fila columna; */</span>
+  <span class="prop">gap</span>: <span class="val">10px 50px</span>; 
+}</code></pre>
+            </div>
+            <div class="footer">9 / 22</div>
+        </div>
+
+        <div class="slide fade">
+            <h2>Propiedades de los Hijos (Items)</h2>
+            <div class="single-content">
+                <p>Hasta aquí controlamos al padre. Pero los hijos también tienen propiedades individuales para controlar su tamaño y orden.</p>
+                <pre><code><span class="comment">/* Ahora aplicaremos estilos a: */</span>
+<span class="sel">.item</span> {
+   ...
+}</code></pre>
+            </div>
+            <div class="footer">10 / 22</div>
+        </div>
+
+        <div class="slide fade">
+            <h2>7. Order (Hijo)</h2>
+            <div class="single-content">
+                <p>Cambia el orden visual sin alterar el HTML. Por defecto es 0.</p>
+                <pre><code><span class="sel">.item-especial</span> {
+  <span class="comment">/* Se va al final */</span>
+  <span class="prop">order</span>: <span class="val">1</span>; 
+}
+
+<span class="sel">.item-primero</span> {
+  <span class="comment">/* Se va al principio (incluso antes que 0) */</span>
+  <span class="prop">order</span>: <span class="val">-1</span>;
+}</code></pre>
+            </div>
+            <div class="footer">11 / 22</div>
+        </div>
+
+        <div class="slide fade">
+            <h2>8. Flex Grow (Hijo)</h2>
+            <div class="single-content">
+                <p>Define la capacidad de un ítem para <strong>crecer</strong> si hay espacio sobrante. Valor por defecto: 0 (no crecer).</p>
+                <pre><code><span class="sel">.item</span> {
+  <span class="comment">/* Todos crecen por igual para llenar el espacio */</span>
+  <span class="prop">flex-grow</span>: <span class="val">1</span>;
+}
+
+<span class="sel">.item-vip</span> {
+  <span class="comment">/* Crece el doble de rápido que los demás */</span>
+  <span class="prop">flex-grow</span>: <span class="val">2</span>;
+}</code></pre>
+            </div>
+            <div class="footer">12 / 22</div>
+        </div>
+
+        <div class="slide fade">
+            <h2>9. Flex Shrink (Hijo)</h2>
+            <div class="single-content">
+                <p>Define la capacidad de un ítem para <strong>encogerse</strong> si falta espacio. Valor por defecto: 1 (sí encoger).</p>
+                <pre><code><span class="sel">.logo</span> {
+  <span class="comment">/* "No me encojas nunca, mantén mi tamaño" */</span>
+  <span class="prop">flex-shrink</span>: <span class="val">0</span>;
+  <span class="prop">width</span>: <span class="val">100px</span>;
+}
+
+<span class="sel">.texto</span> {
+  <span class="comment">/* "Encógete más rápido si es necesario" */</span>
+  <span class="prop">flex-shrink</span>: <span class="val">3</span>;
+}</code></pre>
+            </div>
+            <div class="footer">13 / 22</div>
+        </div>
+
+        <div class="slide fade">
+            <h2>10. Flex Basis (Hijo)</h2>
+            <div class="single-content">
+                <p>Es el tamaño inicial ideal del elemento <strong>antes</strong> de que se aplique <code>grow</code> o <code>shrink</code>. Reemplaza a <code>width</code> en el eje principal.</p>
+                <pre><code><span class="sel">.item</span> {
+  <span class="prop">flex-basis</span>: <span class="val">200px</span>;
+  <span class="comment">/* El navegador intenta darle 200px.
+     Luego mira si debe crecer o encoger. */</span>
+  
+  <span class="prop">flex-basis</span>: <span class="val">auto</span>; <span class="comment">/* Mira su width/height */</span>
+}</code></pre>
+            </div>
+            <div class="footer">14 / 22</div>
+        </div>
+
+        <div class="slide fade">
+            <h2>11. Flex Shorthand (IMPORTANTE)</h2>
+            <div class="single-content">
+                <p>Se recomienda usar la propiedad corta <code>flex</code> en lugar de las 3 individuales. Orden: <strong>Grow | Shrink | Basis</strong>.</p>
+                <pre><code><span class="sel">.item</span> {
+  <span class="comment">/* flex-grow: 0, flex-shrink: 1, flex-basis: auto */</span>
+  <span class="prop">flex</span>: <span class="val">initial</span>; <span class="comment">/* (Defecto) */</span>
+
+  <span class="comment">/* grow: 1, shrink: 1, basis: 0% */</span>
+  <span class="prop">flex</span>: <span class="val">1</span>; <span class="comment">/* "Ocupa todo el espacio disponible" */</span>
+
+  <span class="comment">/* grow: 0, shrink: 0, basis: auto */</span>
+  <span class="prop">flex</span>: <span class="val">none</span>; <span class="comment">/* Rígido */</span>
+}</code></pre>
+            </div>
+            <div class="footer">15 / 22</div>
+        </div>
+
+        <div class="slide fade">
+            <h2>12. Align Self (Hijo)</h2>
+            <div class="single-content">
+                <p>Permite a un hijo rebelarse contra el <code>align-items</code> del padre.</p>
+                <pre><code><span class="sel">.contenedor</span> {
+  <span class="prop">align-items</span>: <span class="val">center</span>;
+}
+
+<span class="sel">.hijo-rebelde</span> {
+  <span class="comment">/* Yo me voy arriba, aunque mi padre diga centro */</span>
+  <span class="prop">align-self</span>: <span class="val">flex-start</span>;
+}</code></pre>
+            </div>
+            <div class="footer">16 / 22</div>
+        </div>
+
+        <div class="slide fade">
+            <h2>Patrón: El Centrado Perfecto</h2>
+            <div class="single-content">
+                <p>El "Santo Grial" de CSS se resuelve en 3 líneas con Flexbox.</p>
+                <pre><code><span class="sel">.centrado-total</span> {
+  <span class="prop">display</span>: <span class="val">flex</span>;
+  <span class="prop">justify-content</span>: <span class="val">center</span>; <span class="comment">/* Eje X */</span>
+  <span class="prop">align-items</span>: <span class="val">center</span>;     <span class="comment">/* Eje Y */</span>
+  
+  <span class="prop">height</span>: <span class="val">100vh</span>;
+}</code></pre>
+            </div>
+            <div class="footer">17 / 22</div>
+        </div>
+
+        <div class="slide fade">
+            <h2>Patrón: Navbar (Space Between)</h2>
+            <div class="single-content">
+                <p>Logo a la izquierda, Menú a la derecha.</p>
+                <pre><code><span class="sel">.navbar</span> {
+  <span class="prop">display</span>: <span class="val">flex</span>;
+  <span class="prop">justify-content</span>: <span class="val">space-between</span>;
+  <span class="prop">align-items</span>: <span class="val">center</span>;
+  <span class="prop">padding</span>: <span class="val">1rem</span>;
+}
+
+<span class="comment">/* 
+   [Logo] <---------- espacio ----------> [Menú] 
+*/</span></code></pre>
+            </div>
+            <div class="footer">18 / 22</div>
+        </div>
+
+        <div class="slide fade">
+            <h2>Patrón: Sticky Footer</h2>
+            <div class="single-content">
+                <p>Empujar el pie de página al fondo si hay poco contenido.</p>
+                <pre><code><span class="sel">body</span> {
+  <span class="prop">display</span>: <span class="val">flex</span>;
+  <span class="prop">flex-direction</span>: <span class="val">column</span>;
+  <span class="prop">min-height</span>: <span class="val">100vh</span>;
+}
+
+<span class="sel">main</span> {
+  <span class="comment">/* Crece para ocupar todo el espacio libre */</span>
+  <span class="prop">flex</span>: <span class="val">1</span>; 
+}</code></pre>
+            </div>
+            <div class="footer">19 / 22</div>
+        </div>
+
+        <div class="slide fade">
+            <h2>Truco: Margin Auto</h2>
+            <div class="single-content">
+                <p>En Flexbox, <code>margin: auto</code> se come todo el espacio disponible. Es mágico.</p>
+                <pre><code><span class="sel">.item-derecha</span> {
+  <span class="comment">/* Empuja al elemento totalmente a la derecha */</span>
+  <span class="prop">margin-left</span>: <span class="val">auto</span>;
+}
+<span class="comment">/* Útil en navbars para separar un grupo de iconos
+   del resto de los elementos. */</span></code></pre>
+            </div>
+            <div class="footer">20 / 22</div>
+        </div>
+
+        <div class="slide fade">
+            <h2>Responsive Flexbox</h2>
+            <div class="single-content">
+                <p>Cambiar la dirección es la forma más fácil de hacer un diseño móvil.</p>
+                <pre><code><span class="sel">.card</span> {
+  <span class="prop">display</span>: <span class="val">flex</span>;
+  <span class="prop">flex-direction</span>: <span class="val">row</span>; <span class="comment">/* Desktop: Lado a lado */</span>
+}
+
+<span class="sel">@media (max-width: 600px)</span> {
+  <span class="sel">.card</span> {
+    <span class="prop">flex-direction</span>: <span class="val">column</span>; <span class="comment">/* Móvil: Uno encima de otro */</span>
+  }
+}</code></pre>
+            </div>
+            <div class="footer">21 / 22</div>
+        </div>
+
+        <div class="slide fade">
+            <h2>Resumen Maestro</h2>
+            <div class="single-content">
+                <p>Recuerda siempre la dirección del eje.</p>
+                <pre><code>1. Define 'display: flex' en el padre.
+2. Decide 'flex-direction' (Row = X, Column = Y).
+3. 'justify-content' mueve en el Eje Principal.
+4. 'align-items' mueve en el Eje Cruzado.
+5. Usa 'gap' para espacios.
+6. Usa 'flex: 1' en hijos para llenar espacios.</code></pre>
+            </div>
+            <div class="footer">22 / 22</div>
+        </div>
+
+        <!-- =============================================================== -->
+        <!-- FIN DE DIAPOSITIVAS -->
+        <!-- =============================================================== -->
+
+        <a class="prev" onclick="plusSlides(-1)">&#10094;</a>
+        <a class="next" onclick="plusSlides(1)">&#10095;</a>
+    </div>
+
+    <script>
+        let slideIndex = 1;
+        showSlides(slideIndex);
+
+        function plusSlides(n) {
+            showSlides(slideIndex += n);
+        }
+
+        function showSlides(n) {
+            let i;
+            let slides = document.getElementsByClassName("slide");
+            if (n > slides.length) { slideIndex = 1 } 
+            if (n < 1) { slideIndex = slides.length }
+            for (i = 0; i < slides.length; i++) {
+                slides[i].style.display = "none";
+            }
+            slides[slideIndex - 1].style.display = "flex";
+        }
+
+        const themeSwitch = document.getElementById('theme-switch');
+        const body = document.body;
+
+        function applyTheme(theme) {
+            if (theme === 'light') {
+                body.classList.add('light-mode');
+                themeSwitch.textContent = 'Dark Mode';
+            } else {
+                body.classList.remove('light-mode');
+                themeSwitch.textContent = 'Light Mode';
+            }
+        }
+
+        themeSwitch.addEventListener('click', () => {
+            let currentTheme = body.classList.contains('light-mode') ? 'light' : 'dark';
+            let newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            applyTheme(newTheme);
+            localStorage.setItem('theme', newTheme);
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme') || 'dark'; 
+            applyTheme(savedTheme);
+        });
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'ArrowLeft') { plusSlides(-1); } 
+            else if (event.key === 'ArrowRight') { plusSlides(1); }
+        });
+    </script>
+
+</body>
+</html>
